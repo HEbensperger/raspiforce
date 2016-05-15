@@ -2,56 +2,91 @@ from simple_salesforce import Salesforce
 import ConfigParser
 import time
 
-#
-# Read configuration from file
-#
-config = ConfigParser.RawConfigParser()
-config.read('salesforce_login.cfg')
+def print_msg():
+	print 'Program is running...'
+	print 'Please press Ctrl+C to end the program...'
 
-#
-# Lookup Salesforce demo org credentials and configuration
-#
-sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
-result = sf_lookup.query("SELECT Id, tegeling_dev__Username__c, tegeling_dev__Password__c, tegeling_dev__Security_Token__c, tegeling_dev__Case_Account_Id__c, tegeling_dev__Case_Contact_Id__c, tegeling_dev__Case_Asset_Id__c, tegeling_dev__Asset_Prefix__c, tegeling_dev__Case_Status__c, tegeling_dev__Case_Subject__c FROM tegeling_dev__Raspberry_Pi_Demo__c WHERE tegeling_dev__Active__c = true")
+def destroy():   # When program ending, the function is executed. 
+	#GPIO.cleanup()
+	print "Exit."
 
-myRegId = result.get('records')[0].get('Id')
-myUsername = result.get('records')[0].get('tegeling_dev__Username__c')
-myPassword =  result.get('records')[0].get('tegeling_dev__Password__c')
-myToken = result.get('records')[0].get('tegeling_dev__Security_Token__c')
+def setup():
+	#
+	# Read configuration from file
+	#
+	config = ConfigParser.RawConfigParser()
+	config.read('salesforce_login.cfg')
 
-accountid = result.get('records')[0].get('tegeling_dev__Case_Account_Id__c')
-contactid = result.get('records')[0].get('tegeling_dev__Case_Contact_Id__c')
-assetid = result.get('records')[0].get('tegeling_dev__Case_Asset_Id__c')
-assetprefix = result.get('records')[0].get('tegeling_dev__Asset_Prefix__c')
-status = result.get('records')[0].get('tegeling_dev__Case_Status__c')
-subject = result.get('records')[0].get('tegeling_dev__Case_Subject__c')
+	#
+	# Lookup Salesforce demo org credentials and configuration
+	#
+	sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
+	result = sf_lookup.query("SELECT Id, tegeling_dev__Username__c, tegeling_dev__Password__c, tegeling_dev__Security_Token__c, tegeling_dev__Case_Account_Id__c, tegeling_dev__Case_Contact_Id__c, tegeling_dev__Case_Asset_Id__c, tegeling_dev__Asset_Prefix__c, tegeling_dev__Case_Status__c, tegeling_dev__Case_Subject__c FROM tegeling_dev__Raspberry_Pi_Demo__c WHERE tegeling_dev__Active__c = true")
 
-#
-# Check the AccountId and ContactId if they are empty and set to None
-#
-if accountid is None:
-   print "AccountId is empty"
-   accountid = ""
+	#
+	# Declare global variables
+	#
+	global myRegId
+	global myUsername
+	global myPassword
+	global myToken
+	global accountid
+	global contactid
+	global assetid
+	global assetprefix
+	global status
+	global subject
 
-if contactid is None:
-   print "ContactId is empty"
-   contactid = ""
+	myRegId = result.get('records')[0].get('Id')
+	myUsername = result.get('records')[0].get('tegeling_dev__Username__c')
+	myPassword =  result.get('records')[0].get('tegeling_dev__Password__c')
+	myToken = result.get('records')[0].get('tegeling_dev__Security_Token__c')
 
-#
-# Create new connection to demo org
-#
+	accountid = result.get('records')[0].get('tegeling_dev__Case_Account_Id__c')
+	contactid = result.get('records')[0].get('tegeling_dev__Case_Contact_Id__c')
+	assetid = result.get('records')[0].get('tegeling_dev__Case_Asset_Id__c')
+	assetprefix = result.get('records')[0].get('tegeling_dev__Asset_Prefix__c')
+	status = result.get('records')[0].get('tegeling_dev__Case_Status__c')
+	subject = result.get('records')[0].get('tegeling_dev__Case_Subject__c')
 
-sf = Salesforce(username=myUsername, password=myPassword, security_token=myToken)
+	#
+	# Check the AccountId and ContactId if they are empty and set to None
+	#
+	if accountid is None:
+	   print "AccountId is empty"
+	   accountid = ""
 
-#
-# Create new asset
-#
-if assetid is None:
-	newassetname = assetprefix + "-" + time.strftime("%Y%m%d_%H%M%S")
-	newasset = sf.Asset.create({'Name':newassetname,'AccountId':accountid,'ContactId':contactid,'Description':"Raspberry Pi demo asset"})
-	assetid = newasset.get('id')
+	if contactid is None:
+	   print "ContactId is empty"
+	   contactid = ""
 
-#
-# Create new case
-#
-sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid})
+def loop():
+	#
+	# Create new connection to demo org
+	#
+	print myUsername
+	print myPassword
+	print myToken
+	sf = Salesforce(username=myUsername, password=myPassword, security_token=myToken)
+
+	#
+	# Create new asset
+	#
+	global assetid
+	if assetid is None:
+		newassetname = assetprefix + "-" + time.strftime("%Y%m%d_%H%M%S")
+		newasset = sf.Asset.create({'Name':newassetname,'AccountId':accountid,'ContactId':contactid,'Description':"Raspberry Pi demo asset"})
+		assetid = newasset.get('id')
+
+	#
+	# Create new case
+	#
+	sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid})
+
+if __name__ == '__main__': # Program starting from here 
+	print_msg()
+	setup() 
+	try:
+		loop()  
+	except KeyboardInterrupt:  
+		destroy()  
