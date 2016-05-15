@@ -1,6 +1,20 @@
 from simple_salesforce import Salesforce
 import ConfigParser
 import time
+import os
+import glob
+
+#
+# Define the celsius temperature threshold to raise alarms and create a new support case
+#
+global alarm_threshold
+alarm_threshold = 25
+
+#
+# Sleep in seconds to allow reset of the temperature
+#
+global sleep_reset
+sleep_reset = 60
 
 def print_msg():
 	print 'Program is running...'
@@ -11,6 +25,17 @@ def destroy():   # When program ending, the function is executed.
 	print "Exit."
 
 def setup():
+	#
+	# setup Raspberry Pi DS18b20 device file
+	# see https://cdn-learn.adafruit.com/downloads/pdf/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing.pdf
+	#
+	global device_file
+	os.system('modprobe w1-gpio')
+	os.system('modprobe w1-therm')
+	base_dir = '/sys/bus/w1/devices/'
+	device_folder = glob.glob(base_dir + '28*')[0]
+	device_file = device_folder + '/w1_slave'
+
 	#
 	# Read configuration from file
 	#
@@ -60,6 +85,34 @@ def setup():
 	   print "ContactId is empty"
 	   contactid = ""
 
+def read_temp_raw():
+	#
+	# Read and return lines from device file
+	#
+	f = open(device_file, 'r')
+	lines = f.readlines()
+	f.close()
+	return lines
+
+def read_temp():
+	#
+	# Read temperature from device file
+	#
+	lines = read_temp_raw()
+	#
+	# Ignore the first sample
+	#
+	lines = read_temp_raw()
+
+	while lines[0].strip()[-3:] != 'YES':
+		time.sleep(0.2)
+		lines = read_temp_raw()
+	equals_pos = lines[1].find('t=')
+	if equals_pos != -1:
+		temp_string = lines[1][equals_pos+2:]
+		temp_c = float(temp_string) / 1000.0
+	return temp_c
+
 def loop():
 	#
 	# Create new connection to demo org
@@ -78,10 +131,28 @@ def loop():
 		newasset = sf.Asset.create({'Name':newassetname,'AccountId':accountid,'ContactId':contactid,'Description':"Raspberry Pi demo asset"})
 		assetid = newasset.get('id')
 
-	#
-	# Create new case
-	#
-	sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid})
+	##
+	## Infinite loop to allow reset of temperature
+	##
+	while True:
+		#
+		# Loop the device and check the temperature
+		#
+		alarm = False
+		while not alarm:
+			currenttemp = read_temp()
+			print currenttemp
+			if currenttemp > alarm_threshold:
+				print "Temperature Alarm!"
+				alarm = True
+			time.sleep(1)
+
+		#
+		# Create new case and sleep a while to allow temperature to cool down
+		#
+		sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid})
+		print "Sleep for " + str(sleep_reset) + " seconds..."
+		time.sleep(sleep_reset)
 
 if __name__ == '__main__': # Program starting from here 
 	print_msg()
