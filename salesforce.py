@@ -86,26 +86,26 @@ def setup():
 	# Lookup Salesforce demo org credentials and configuration
 	#
 	sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
-	result = sf_lookup.query("SELECT Id, tegeling_dev__Username__c, tegeling_dev__Password__c, tegeling_dev__Security_Token__c, tegeling_dev__Case_Account_Id__c, tegeling_dev__Case_Contact_Id__c, tegeling_dev__Case_Asset_Id__c, tegeling_dev__Asset_Prefix__c, tegeling_dev__Case_Status__c, tegeling_dev__Case_Subject__c, tegeling_dev__Alarm_Threshold__c, tegeling_dev__Asset_Description__c FROM tegeling_dev__Raspberry_Pi_Demo__c WHERE tegeling_dev__Active__c = true")
+	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Account_Id__c, Case_Contact_Id__c, Case_Asset_Id__c, Asset_Prefix__c, Case_Status__c, Case_Subject__c, Alarm_Threshold__c, Asset_Description__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
 
 	#
 	# Register new demo run
 	#
 	myRegId = result.get('records')[0].get('Id')	
-	sf_lookup.tegeling_dev__Raspberry_Pi_Demo_Registration__c.create({'tegeling_dev__Raspberry_Pi_Demo__c':myRegId,'tegeling_dev__Status__c':'connected'})
+	sf_lookup.Raspberry_Pi_Demo_Registration__c.create({'Raspberry_Pi_Demo__c':myRegId,'Status__c':'connected'})
 
-	myUsername = result.get('records')[0].get('tegeling_dev__Username__c')
-	myPassword =  result.get('records')[0].get('tegeling_dev__Password__c')
-	myToken = result.get('records')[0].get('tegeling_dev__Security_Token__c')
+	myUsername = result.get('records')[0].get('Username__c')
+	myPassword =  result.get('records')[0].get('Password__c')
+	myToken = result.get('records')[0].get('Security_Token__c')
 
-	accountid = result.get('records')[0].get('tegeling_dev__Case_Account_Id__c')
-	contactid = result.get('records')[0].get('tegeling_dev__Case_Contact_Id__c')
-	assetid = result.get('records')[0].get('tegeling_dev__Case_Asset_Id__c')
-	assetprefix = result.get('records')[0].get('tegeling_dev__Asset_Prefix__c')
-	assetdesc = result.get('records')[0].get('tegeling_dev__Asset_Description__c')
-	alarm_threshold = result.get('records')[0].get('tegeling_dev__Alarm_Threshold__c')
-	status = result.get('records')[0].get('tegeling_dev__Case_Status__c')
-	subject = result.get('records')[0].get('tegeling_dev__Case_Subject__c')
+	accountid = result.get('records')[0].get('Case_Account_Id__c')
+	contactid = result.get('records')[0].get('Case_Contact_Id__c')
+	assetid = result.get('records')[0].get('Case_Asset_Id__c')
+	assetprefix = result.get('records')[0].get('Asset_Prefix__c')
+	assetdesc = result.get('records')[0].get('Asset_Description__c')
+	alarm_threshold = result.get('records')[0].get('Alarm_Threshold__c')
+	status = result.get('records')[0].get('Case_Status__c')
+	subject = result.get('records')[0].get('Case_Subject__c')
 
 	#
 	# Check the AccountId and ContactId if they are empty and set to None
