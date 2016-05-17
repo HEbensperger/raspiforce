@@ -23,5 +23,5 @@ Simple Salesforce is a basic Salesforce.com REST API client built for Python. Th
 See also details at https://github.com/heroku/simple-salesforce
 
 # Salesforce Package raspiforce
-The unmanaged package is available at https://login.salesforce.com/packaging/installPackage.apexp?p0=04t58000000MSqx
+The unmanaged package is available at https://login.salesforce.com/packaging/installPackage.apexp?p0=04t58000000Qzg3
 It installs a new App Raspberry Pi Demo that contains a new custom object Raspberry Pi Demo. There should be one record maked as Active (boolean field). You can assign asset and case details for the newly created records. This makes it very reusable and easy to adopt.
