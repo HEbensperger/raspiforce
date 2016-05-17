@@ -1,5 +1,5 @@
 # About raspiforce
-The Raspberry Pi is a low cost, credit-card sized computer widely used in many educational projects. This project uses a Raspberry Pi to implement a temperature sensor and integrate with Salesforce Service Cloud to demonstrate Internet of Things (IoT) capabilities.
+The Raspberry Pi is a low cost, credit-card sized computer widely used in many educational projects. This project implements a demo kit that uses a Raspberry Pi to implement a temperature sensor and integrate with Salesforce Service Cloud to demonstrate Internet of Things (IoT) capabilities.
 
 The project has hardware and software components involved:
 * Raspberry Pi, breadboard and a set of sensors
@@ -12,8 +12,8 @@ There are many tutorials and projects available. This project is mainly based on
 
 # Python script
 The Python script [salesforce.py](https://github.com/tegeling/raspiforce/blob/master/salesforce.py) contains the relevant logic to read temperature data from a sensor and create a Case record in Salesforce when a certain threshold is hit.
-The script reads configuration data from a Salesforce org that has the raspiforc package installed. The configuration includes details like connection details to a Salesforce demo org, a temperature threshold, related Account, Contact records and default asset attributes.
-The scripts reads the configuration data dynamically during startup. This allows remote reconfiguration of the device without applying changes directly in the scripts. The intention of this demo kit is to be used easily when demonstrating to different audiences.
+The script reads configuration data from a Salesforce org that has the raspiforce package installed. The configuration includes details like connection details to a Salesforce demo org, a temperature threshold, related Account, Contact records and default Asset attributes.
+The script reads the configuration data dynamically during startup. This allows remote re-configuration of the device without applying changes directly in the scripts. The intention of this demo kit is to be used easily when demonstrating to different audiences.
 
 ## Configuration file
 The configuration file [salesforce_login.cfg](https://github.com/tegeling/raspiforce/blob/master/salesforce_login.cfg) contains the username, password and security token of the Salesforce org, where the Raspberry Pi Demo records are stored. This is a one time configuration and statically stored in the configuration file.
