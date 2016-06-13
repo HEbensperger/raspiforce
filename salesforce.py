@@ -7,6 +7,9 @@
 ##   Use --simulation as commandline parameter to execute without            ##
 ##   Raspberry Pi connected and simulate asset and case creation             ##
 ##                                                                           ##
+##   Use --chat as commandline parameter to publish status messages          ##
+##   to the Websocket Chat server                                            ##
+##                                                                           ##
 ##   See GitHub project for more details:                                    ##
 ##   https://github.com/tegeling/raspiforce                                  ##
 ##                                                                           ##
@@ -16,6 +19,8 @@
 ###############################################################################
 
 from simple_salesforce import Salesforce
+from websocket import create_connection
+import json
 import ConfigParser
 import time
 import os
@@ -36,6 +41,8 @@ global sleep_reset
 sleep_reset = 60
 
 def print_msg():
+	if chat_mode:
+		print 'Program is running in chat mode...'
 	if simulation_mode:
 		print 'Program is running in simulation mode...'
 	else:
@@ -45,7 +52,19 @@ def print_msg():
 
 def destroy():   # When program ending, the function is executed. 
 	#GPIO.cleanup()
+	if chat_mode:
+		ws.close()
 	print "Exit."
+
+def chat(handle, msg):
+	global ws
+	#
+	# Send new chat message to monitoring service via websockets
+	#
+	myText = u'{"handle": "' + handle + '","text": "' + msg + '"}'
+	myjson = json.loads(myText)
+	payload = json.dumps(myjson, ensure_ascii = False).encode('utf8')
+	ws.send(payload)
 
 def setup():
 	#
@@ -55,6 +74,7 @@ def setup():
 	global myUsername
 	global myPassword
 	global myToken
+	global ownerid
 	global accountid
 	global contactid
 	global assetid
@@ -63,6 +83,8 @@ def setup():
 	global alarm_threshold
 	global status
 	global subject
+	global case_type
+	global ws
 
 	#
 	# setup Raspberry Pi DS18b20 device file
@@ -83,10 +105,18 @@ def setup():
 	config.read('salesforce_login.cfg')
 
 	#
+	# Establish Websockt connection for monitoring chat service
+	#
+	if chat_mode:
+		ws_url = config.get('Chat', 'ws_url')
+		ws = create_connection(ws_url)
+
+
+	#
 	# Lookup Salesforce demo org credentials and configuration
 	#
 	sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
-	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Account_Id__c, Case_Contact_Id__c, Case_Asset_Id__c, Asset_Prefix__c, Case_Status__c, Case_Subject__c, Alarm_Threshold__c, Asset_Description__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
+	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Owner__c, Case_Account_Id__c, Case_Contact_Id__c, Case_Asset_Id__c, Asset_Prefix__c, Case_Status__c, Case_Type__c, Case_Subject__c, Alarm_Threshold__c, Asset_Description__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
 
 	#
 	# Register new demo run
@@ -98,6 +128,7 @@ def setup():
 	myPassword =  result.get('records')[0].get('Password__c')
 	myToken = result.get('records')[0].get('Security_Token__c')
 
+	ownerid = result.get('records')[0].get('Case_Owner__c')
 	accountid = result.get('records')[0].get('Case_Account_Id__c')
 	contactid = result.get('records')[0].get('Case_Contact_Id__c')
 	assetid = result.get('records')[0].get('Case_Asset_Id__c')
@@ -106,10 +137,17 @@ def setup():
 	alarm_threshold = result.get('records')[0].get('Alarm_Threshold__c')
 	status = result.get('records')[0].get('Case_Status__c')
 	subject = result.get('records')[0].get('Case_Subject__c')
+	case_type = result.get('records')[0].get('Case_Type__c')
 
+	if chat_mode:
+		chat("Setup","Connection established.")
 	#
-	# Check the AccountId and ContactId if they are empty and set to None
+	# Check the OwnerId, AccountId and ContactId if they are empty and set to None
 	#
+	if ownerid is None:
+	   print "OwnerId is empty"
+	   ownerid = ""
+
 	if accountid is None:
 	   print "AccountId is empty"
 	   accountid = ""
@@ -164,6 +202,9 @@ def loop():
 		newasset = sf.Asset.create({'Name':newassetname,'AccountId':accountid,'ContactId':contactid,'Description':assetdesc})
 		assetid = newasset.get('id')
 
+	if chat_mode:
+		chat(newassetname,"Asset created.")
+
 	##
 	## Infinite loop to allow reset of temperature
 	##
@@ -175,15 +216,21 @@ def loop():
 		while not alarm:
 			currenttemp = read_temp()
 			print currenttemp
+			if chat_mode:
+				chat(newassetname, "Temperature Celsius: " + currenttemp)
 			if currenttemp > alarm_threshold:
 				print "Temperature Alarm!"
+				if chat_mode:
+					chat(newassetname, "Temperature Alarm! ")
 				alarm = True
 			time.sleep(1)
 
 		#
 		# Create new case and sleep a while to allow temperature to cool down
 		#
-		sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid})
+		sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		if chat_mode:
+			chat(newassetname, "Case created.")
 		print "Sleep for " + str(sleep_reset) + " seconds..."
 		time.sleep(sleep_reset)
 
@@ -191,12 +238,27 @@ def loop():
 	# Simulate new case 
 	#
 	if simulation_mode:
-		sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid})
+		#sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		if chat_mode:
+			chat(newassetname, "Case simulated.")
 
 if __name__ == '__main__': # Program starting from here 
 	global simulation_mode
+	global chat_mode
 	simulation_mode = False
+	chat_mode = False
+	global ws
+
 	if (len(sys.argv) == 2) and (str(sys.argv[1]) == "--simulation"):
+		simulation_mode = True
+	if (len(sys.argv) == 2) and (str(sys.argv[1]) == "--chat"):
+		chat_mode = True
+	if (len(sys.argv) == 3) and (str(sys.argv[1]) == "--simulation") and (str(sys.argv[2]) == "--chat"):
+		chat_mode = True
+		simulation_mode = True
+	if (len(sys.argv) == 3) and (str(sys.argv[1]) == "--chat") and (str(sys.argv[2]) == "--simulation"):
+		chat_mode = True
 		simulation_mode = True
 	print_msg()
 	setup() 
