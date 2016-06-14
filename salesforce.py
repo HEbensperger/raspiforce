@@ -223,7 +223,7 @@ def loop():
 				if chat_mode:
 					chat(newassetname, "Temperature Alarm! ")
 				alarm = True
-			time.sleep(1)
+			time.sleep(2)
 
 		#
 		# Create new case and sleep a while to allow temperature to cool down
@@ -233,6 +233,8 @@ def loop():
 			chat(newassetname, "Case created.")
 		print "Sleep for " + str(sleep_reset) + " seconds..."
 		time.sleep(sleep_reset)
+		if chat_mode:
+			chat(newassetname, "Sleep for " + str(sleep_reset) + " seconds...")
 
 	#
 	# Simulate new case 
