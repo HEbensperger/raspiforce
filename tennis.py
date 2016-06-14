@@ -91,6 +91,7 @@ def setup():
 	global subject
 	global case_type
 	global ws
+	global adxl
 
 	#
 	# setup Raspberry Pi ADXL345
@@ -183,6 +184,7 @@ def loop():
 	##
 	## Infinite loop to allow sensor reading
 	##
+	global adxl
 	while True and not simulation_mode:
 		#
 		# Loop the device and check the sensor
