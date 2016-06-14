@@ -217,7 +217,7 @@ def loop():
 			currenttemp = read_temp()
 			print currenttemp
 			if chat_mode:
-				chat(newassetname, "Temperature Celsius: " + currenttemp)
+				chat(newassetname, "Temperature Celsius: " + str(currenttemp))
 			if currenttemp > alarm_threshold:
 				print "Temperature Alarm!"
 				if chat_mode:
