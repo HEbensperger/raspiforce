@@ -116,7 +116,7 @@ def setup():
 	# Lookup Salesforce demo org credentials and configuration
 	#
 	sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
-	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Owner__c, Case_Account_Id__c, Case_Contact_Id__c, Case_Asset_Id__c, Asset_Prefix__c, Case_Status__c, Case_Type__c, Case_Subject__c, Alarm_Threshold__c, Asset_Description__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
+	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Owner__c, Case_Account_Id__c, Case_Contact_Id__c, Case_Asset_Id__c, Asset_Prefix__c, Case_Status__c, Case_Type__c, Case_Subject__c, Alarm_Threshold__c, Asset_Description__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true AND Raspi_Hostname__c = " + config.get('Host', 'hostname'))
 
 	#
 	# Register new demo run
