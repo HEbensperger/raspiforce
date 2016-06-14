@@ -232,9 +232,9 @@ def loop():
 		if chat_mode:
 			chat(newassetname, "Case created.")
 		print "Sleep for " + str(sleep_reset) + " seconds..."
-		time.sleep(sleep_reset)
 		if chat_mode:
 			chat(newassetname, "Sleep for " + str(sleep_reset) + " seconds...")
+		time.sleep(sleep_reset)
 
 	#
 	# Simulate new case 
