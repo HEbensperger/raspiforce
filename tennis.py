@@ -31,7 +31,7 @@ import time
 import os
 import glob
 import sys
-import adxl345
+#import adxl345
 
 #
 # Define the celsius temperature threshold to raise alarms and create a new support case
@@ -216,14 +216,14 @@ def loop():
 					chat(newassetname, "Low shot")
 				time.sleep(2)
 		#
-		# Create new case and sleep a while to allow temperature to cool down
+		# Create new interaction record
 		#
-		sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		#sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		sf.RaspiInteraction__c.create({'Msg__c':subject,'Contact__c':contactid})
+
 		if chat_mode:
-			chat(newassetname, "Case created.")
+			chat(newassetname, "Interaction created.")
 		print "Sleep for " + str(sleep_reset) + " seconds..."
-		if chat_mode:
-			chat(newassetname, "Sleep for " + str(sleep_reset) + " seconds...")
 		time.sleep(sleep_reset)
 
 	#
@@ -231,9 +231,10 @@ def loop():
 	#
 	if simulation_mode:
 		#sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
-		sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		#sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		sf.RaspiInteraction__c.create({'Msg__c':subject,'Contact__c':contactid})
 		if chat_mode:
-			chat(newassetname, "Case simulated.")
+			chat(newassetname, "Interaction simulated.")
 
 if __name__ == '__main__': # Program starting from here 
 	global simulation_mode
