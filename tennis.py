@@ -31,7 +31,7 @@ import time
 import os
 import glob
 import sys
-#import adxl345
+import adxl345
 
 #
 # Define the celsius temperature threshold to raise alarms and create a new support case
@@ -57,7 +57,6 @@ def print_msg():
 
 
 def destroy():   # When program ending, the function is executed. 
-	#GPIO.cleanup()
 	if chat_mode:
 		ws.close()
 	print "Exit."
@@ -80,16 +79,8 @@ def setup():
 	global myUsername
 	global myPassword
 	global myToken
-	global ownerid
-	global accountid
 	global contactid
-	global assetid
-	global assetprefix
-	global assetdesc
-	global alarm_threshold
-	global status
 	global subject
-	global case_type
 	global ws
 	global adxl
 
@@ -120,7 +111,7 @@ def setup():
 	# Lookup Salesforce demo org credentials and configuration
 	#
 	sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
-	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Owner__c, Case_Account_Id__c, Case_Contact_Id__c, Case_Asset_Id__c, Asset_Prefix__c, Case_Status__c, Case_Type__c, Case_Subject__c, Alarm_Threshold__c, Asset_Description__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
+	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Contact_Id__c, Case_Subject__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
 
 	#
 	# Register new demo run
@@ -132,54 +123,17 @@ def setup():
 	myPassword =  result.get('records')[0].get('Password__c')
 	myToken = result.get('records')[0].get('Security_Token__c')
 
-	ownerid = result.get('records')[0].get('Case_Owner__c')
-	accountid = result.get('records')[0].get('Case_Account_Id__c')
 	contactid = result.get('records')[0].get('Case_Contact_Id__c')
-	assetid = result.get('records')[0].get('Case_Asset_Id__c')
-	assetprefix = result.get('records')[0].get('Asset_Prefix__c')
-	assetdesc = result.get('records')[0].get('Asset_Description__c')
-	alarm_threshold = result.get('records')[0].get('Alarm_Threshold__c')
-	status = result.get('records')[0].get('Case_Status__c')
 	subject = result.get('records')[0].get('Case_Subject__c')
-	case_type = result.get('records')[0].get('Case_Type__c')
 
 	if chat_mode:
-		chat("Setup","Connection established.")
-	#
-	# Check the OwnerId, AccountId and ContactId if they are empty and set to None
-	#
-	if ownerid is None:
-	   print "OwnerId is empty"
-	   ownerid = ""
-
-	if accountid is None:
-	   print "AccountId is empty"
-	   accountid = ""
-
-	if contactid is None:
-	   print "ContactId is empty"
-	   contactid = ""
-
-	if alarm_threshold is None:
-	   alarm_threshold = alarm_threshold_default
+		chat("Sensor","Connection established.")
 
 def loop():
 	#
 	# Create new connection to demo org
 	#
 	sf = Salesforce(username=myUsername, password=myPassword, security_token=myToken)
-
-	#
-	# Create new asset
-	#
-	global assetid
-	if assetid is None:
-		newassetname = assetprefix + "-" + time.strftime("%Y%m%d_%H%M%S")
-		newasset = sf.Asset.create({'Name':newassetname,'AccountId':accountid,'ContactId':contactid,'Description':assetdesc})
-		assetid = newasset.get('id')
-
-	if chat_mode:
-		chat(newassetname,"Asset created.")
 
 	##
 	## Infinite loop to allow sensor reading
@@ -200,7 +154,7 @@ def loop():
 				#print "   y = %.3fG" % ( axes['y'] )
 				#print "   z = %.3fG" % ( axes['z'] )
 				if chat_mode:
-					chat(newassetname, "You are the HAMMER SLAMMER!!!")
+					chat("Sensor", "HAMMER SLAMMER")
 				print "You are the HAMMER SLAMMER!!!"
 				time.sleep(2)
 				alarm = True
@@ -208,33 +162,28 @@ def loop():
 			if (abs_x > 6):
 				print "Medium shot"
 				if chat_mode:
-					chat(newassetname, "Medium shot")
+					chat("Sensor", "Medium shot")
 				time.sleep(2)
 			if (abs_x > 4):
 				print "Low shot"
 				if chat_mode:
-					chat(newassetname, "Low shot")
+					chat("Sensor", "Low shot")
 				time.sleep(2)
 		#
 		# Create new interaction record
 		#
-		#sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
 		sf.RaspiInteraction__c.create({'Msg__c':subject,'Contact__c':contactid})
 
 		if chat_mode:
-			chat(newassetname, "Interaction created.")
-		print "Sleep for " + str(sleep_reset) + " seconds..."
-		time.sleep(sleep_reset)
+			chat("Sensor", "Interaction created.")
 
 	#
-	# Simulate new case 
+	# Simulate new interaction 
 	#
 	if simulation_mode:
-		#sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
-		#sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
 		sf.RaspiInteraction__c.create({'Msg__c':subject,'Contact__c':contactid})
 		if chat_mode:
-			chat(newassetname, "Interaction simulated.")
+			chat("Sensor", "Interaction simulated.")
 
 if __name__ == '__main__': # Program starting from here 
 	global simulation_mode
