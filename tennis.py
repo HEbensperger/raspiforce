@@ -31,7 +31,7 @@ import time
 import os
 import glob
 import sys
-#import adxl345
+import adxl345
 
 #
 # Define the celsius temperature threshold to raise alarms and create a new support case
