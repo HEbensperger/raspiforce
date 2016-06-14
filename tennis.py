@@ -31,7 +31,7 @@ import time
 import os
 import glob
 import sys
-import adxl345
+#import adxl345
 
 #
 # Define the celsius temperature threshold to raise alarms and create a new support case
@@ -111,7 +111,7 @@ def setup():
 	# Lookup Salesforce demo org credentials and configuration
 	#
 	sf_lookup = Salesforce(username=config.get('Salesforce', 'username'), password=config.get('Salesforce', 'password'), security_token=config.get('Salesforce', 'security_token'))
-	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Contact_Id__c, Case_Subject__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true")
+	result = sf_lookup.query("SELECT Id, Username__c, Password__c, Security_Token__c, Case_Contact_Id__c, Case_Subject__c FROM Raspberry_Pi_Demo__c WHERE Active__c = true AND Raspi_Hostname__c = " + config.get('Host', 'hostname'))
 
 	#
 	# Register new demo run
