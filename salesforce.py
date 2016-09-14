@@ -51,7 +51,8 @@ def print_msg():
 
 
 def destroy():   # When program ending, the function is executed. 
-	#GPIO.cleanup()
+	if not simulation_mode:
+		GPIO.cleanup()
 	if chat_mode:
 		ws.close()
 	print "Exit."
@@ -201,9 +202,15 @@ def loop():
 		newassetname = assetprefix + "-" + time.strftime("%Y%m%d_%H%M%S")
 		newasset = sf.Asset.create({'Name':newassetname,'AccountId':accountid,'ContactId':contactid,'Description':assetdesc})
 		assetid = newasset.get('id')
+		if chat_mode:
+			chat(newassetname,"Asset created.")
+	else:
+		assetidquoted = "'" + assetid + "'"
+		assetresult = sf.query("SELECT Name FROM Asset WHERE Id = " + assetidquoted)
+		newassetname = assetresult.get('records')[0].get('Name')
+		if chat_mode:
+			chat(newassetname,"Asset found.")
 
-	if chat_mode:
-		chat(newassetname,"Asset created.")
 
 	##
 	## Infinite loop to allow reset of temperature
@@ -228,7 +235,7 @@ def loop():
 		#
 		# Create new case and sleep a while to allow temperature to cool down
 		#
-		sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':str(assetid),'Type':case_type})
 		if chat_mode:
 			chat(newassetname, "Case created.")
 		print "Sleep for " + str(sleep_reset) + " seconds..."
@@ -240,8 +247,7 @@ def loop():
 	# Simulate new case 
 	#
 	if simulation_mode:
-		#sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
-		sf.Case.create({'Subject':subject,'Status':status,'AccountId':accountid,'ContactId':contactid,'AssetId':assetid,'Type':case_type})
+		sf.Case.create({'Subject':subject,'Status':status,'OwnerId':ownerid,'AccountId':accountid,'ContactId':contactid,'AssetId':str(assetid),'Type':case_type})
 		if chat_mode:
 			chat(newassetname, "Case simulated.")
 
